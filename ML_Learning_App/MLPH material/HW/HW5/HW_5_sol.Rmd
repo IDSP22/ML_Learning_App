@@ -1,0 +1,71 @@
+---
+title: "HW 5"
+author: "Dr. Yang Feng"
+output:
+  html_document:
+    number_sections: true
+    df_print: paged
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE,
+                      warnings = FALSE, fig.align = 'center',  eval = TRUE)
+```
+
+You can run the following code to prepare the analysis.
+```{r}
+library(tidyverse)  #INSTALL IF NECESSARY
+n <- 300
+p <- 20
+set.seed(111)
+x <- matrix(rnorm(n*p), n, p)
+beta <- rep(0, p)
+beta[seq(1, 19, 2)] = seq(from = 0.1, to = 1, by = 0.1)
+y <- x %*% beta + rnorm(n)
+dat <- data.frame(x = x, y = y)
+colnames(dat) <- c(paste0("x", 1:p), "y")
+tr_dat <- dat[1:(n/2), ]
+te_dat <- dat[-(1:(n/2)), ]
+```
+
+Suppose we want to build a linear regression model to predict `y`. Please answer the following questions.
+
+1. Use the training data `tr_dat` using the following methods. For each method, output its regression coefficients, and compute its test error on `te_dat`. Looking at the true regression coefficients `beta`, discuss your findings on the following methods. 
+  a. Best Subset Selection with BIC
+  b. Forward Stepwise Selection with Adjusted $R^2$
+  c. Backward Stepwise Selection with Cp
+  d. Ridge Regression with 10-fold CV
+  e. Lasso with 10-fold CV
+
+```{r}
+library(leaps)
+fits_list <- list(best_subset = regsubsets(y ~ ., data = tr_dat, nvmax = p),
+                  forward = regsubsets(y ~ ., data = tr_dat, method = "forward", nvmax = p),
+                  backward = regsubsets(y ~ ., data = tr_dat, method = "backward", nvmax = p))
+method_seq <- c("bic", "adjr2", "cp")
+lapply(1:length(fits_list), function(j){
+  fit <- fits_list[[j]]
+  fit_sum <- summary(fit)
+  best_ind <- which.min(fit_sum[[method_seq[j]]] * 
+                          ifelse(j == 2, -1, 1))
+best_coef <- coef(fit, best_ind)
+te_x <- te_dat %>% select(names(best_coef)[-1])
+te_pred <- cbind(1, as.matrix(te_x)) %*% best_coef
+te_error <- mean((te_pred - te_dat$y)^2)
+list(coef = best_coef, test_error = te_error)
+})
+library(glmnet)
+ridge_lasso <- list(ridge = 
+                      cv.glmnet(as.matrix(tr_dat %>%
+                                                  dplyr::select(-y)), tr_dat$y, alpha = 0),lasso = 
+                      cv.glmnet(as.matrix(tr_dat %>%
+                                                  dplyr::select(-y)), tr_dat$y, alpha = 1))
+lapply(ridge_lasso, function(fit){
+  newx <- as.matrix(te_dat %>% dplyr::select(-y))
+  ypred <- predict(fit, newx = newx)
+  list(coef = coef(fit), test_error = mean((ypred - te_dat$y)^2))
+})
+```
+
+2. For the Simple Special Case for Ridge Regression and Lasso, prove (6.14) and (6.15) on Page 247 of ISLRv2.
+

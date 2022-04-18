@@ -1,0 +1,232 @@
+---
+title: "Machine Learning in Public Health"
+author: "Dr. Yang Feng"
+subtitle: 'Lecture 6: Linear Model Selection and Regularization (Lab)'
+output:
+  pdf_document: default
+  html_document:
+    df_print: paged
+    number_sections: yes
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE,
+                      warnings = FALSE, fig.align = 'center',  eval = TRUE)
+```
+
+
+# Best Subset Selection 
+
+
+```{r}
+library(ISLR)
+library(tidyverse)
+data("Credit")
+credit_cate <- Credit %>% dplyr::select(-ID)
+credit <- model.matrix(~., data = credit_cate) %>% 
+  as_tibble() %>% 
+  select(-"(Intercept)")
+set.seed(0)
+tr_ind <- sample(1:nrow(credit), 200)
+credit_tr <- credit[tr_ind,]
+credit_te <- credit[-tr_ind,]
+``` 
+
+```{r}
+library(leaps)
+best_subset <- regsubsets(Balance ~. ,data = credit_tr)
+##default only considers models size up to 8
+best_subset <- regsubsets(Balance ~. ,data = credit_tr, nvmax = 11)
+##now considers all 11 variables
+summary(best_subset)
+
+best_subset_sum <- summary(best_subset)
+best_subset_sum$rsq
+
+par(mfrow = c(2,2))
+plot(best_subset, scale = "r2")
+plot(best_subset, scale = "adjr2")
+plot(best_subset, scale = "Cp")
+plot(best_subset, scale = "bic")
+```
+
+## Optimal model for each size: four methods
+
+```{r}
+measures <- c("rsq", "adjr2", "cp", "bic")
+our_names <- c("R2", "Adjusted R2", "Cp", "BIC")
+size_seq <- 1:length(best_subset_sum$rsq)
+my_plots <- NULL
+for(mea_ind in seq_along(measures)){
+  dat <- data.frame(d = size_seq, val = best_subset_sum[[measures[mea_ind]]])
+  my_plots[[mea_ind]] <- ggplot(dat, mapping = aes(x = d, y = val)) +
+    geom_point() +
+    geom_line() +
+    ggtitle(our_names[mea_ind])
+}
+library(egg)
+grid.arrange(grobs = my_plots, ncol = 2)
+```
+
+## Coefficients corresponding to optimal models
+```{r, echo = TRUE}
+coef(best_subset, 1:11)
+coef(best_subset, 4)
+```
+
+```{r}
+best_ind <- which.min(best_subset_sum$bic)
+best_coef <- coef(best_subset, best_ind)
+tr_x <- credit_tr %>% select(names(best_coef)[-1])
+tr_pred <- cbind(1, as.matrix(tr_x)) %*% best_coef
+tr_error_best <- mean((tr_pred - credit_tr$Balance)^2)
+te_x <- credit_te %>% select(names(best_coef)[-1])
+te_pred <- cbind(1, as.matrix(te_x)) %*% best_coef
+te_error_best <- mean((te_pred - credit_te$Balance)^2)
+tr_error_best
+te_error_best
+```
+
+
+# Forward Stepwise Selection 
+
+```{r}
+forward_fit <- regsubsets(Balance ~., data = credit_tr, method = "forward", nvmax = 11)
+forward_sum <- summary(forward_fit)
+best_ind <- which.min(forward_sum$bic)
+best_coef <- coef(forward_fit, best_ind)
+```
+
+
+```{r}
+tr_x <- credit_tr %>% select(names(best_coef)[-1])
+tr_pred <- cbind(1, as.matrix(tr_x)) %*% best_coef
+tr_error_forward <- mean((tr_pred - credit_tr$Balance)^2)
+te_x <- credit_te %>% select(names(best_coef)[-1])
+te_pred <- cbind(1, as.matrix(te_x)) %*% best_coef
+te_error_forward <- mean((te_pred - credit_te$Balance)^2)
+tr_error_forward
+te_error_forward
+```
+
+## Optimal model for each size: four methods
+
+```{r}
+size_seq <- 1:length(forward_sum$rsq)
+my_plots <- NULL
+for(mea_ind in seq_along(measures)){
+  dat <- data.frame(d = size_seq, val = forward_sum[[measures[mea_ind]]])
+  my_plots[[mea_ind]] <- ggplot(dat, mapping = aes(x = d, y = val)) + geom_point() + geom_line() +
+    ggtitle(our_names[mea_ind])
+}
+grid.arrange(grobs = my_plots, ncol = 2)
+```
+
+# Backward Stepwise Selection 
+
+
+```{r}
+backward_fit <- regsubsets(Balance ~., data = credit_tr, method = "backward", nvmax = 11)
+backward_sum <- summary(backward_fit)
+best_ind <- which.min(backward_sum$bic)
+best_coef <- coef(backward_fit, best_ind)
+```
+
+```{r}
+tr_x <- credit_tr %>% select(names(best_coef)[-1])
+tr_pred <- cbind(1, as.matrix(tr_x)) %*% best_coef
+tr_error_backward <- mean((tr_pred - credit_tr$Balance)^2)
+te_x <- credit_te %>% select(names(best_coef)[-1])
+te_pred <- cbind(1, as.matrix(te_x)) %*% best_coef
+te_error_backward <- mean((te_pred - credit_te$Balance)^2)
+tr_error_backward
+te_error_backward
+```
+
+
+## Optimal model for each size: four methods
+
+```{r}
+size_seq <- 1:length(backward_sum$rsq)
+my_plots <- NULL
+for(mea_ind in seq_along(measures)){
+  dat <- data.frame(d = size_seq, val = backward_sum[[measures[mea_ind]]])
+  my_plots[[mea_ind]] <- ggplot(dat, mapping = aes(x = d, y = val)) + geom_point() + geom_line() +
+    ggtitle(our_names[mea_ind])
+}
+grid.arrange(grobs = my_plots, ncol = 2)
+```
+
+
+
+# Ridge solution path for Credit data
+
+```{r}
+library(glmnet)
+library(caret)
+library(plotmo)
+
+x_tr <- as.matrix(credit_tr[-12])
+y_tr <- credit_tr[,12, drop = T]
+x_te <- as.matrix(credit_te[-12])
+y_te <- credit_te[,12,drop = T]
+
+std_fit <- preProcess(x_tr, method = c("center", "scale"))
+x_tr_std <- predict(std_fit, x_tr)
+x_te_std <- predict(std_fit, x_te)
+
+fit_ridge <- glmnet(x_tr_std, y_tr, alpha = 0)
+
+plot_glmnet(fit_ridge)
+```
+
+
+
+```{r}
+set.seed(0)
+# without standardization
+cv_fit_ridge <- cv.glmnet(x_tr, y_tr, alpha = 0)
+tr_pred <- predict(cv_fit_ridge, newx = x_tr)
+te_pred <- predict(cv_fit_ridge, newx = x_te)
+tr_error_ridge <- mean((tr_pred - y_tr)^2)
+te_error_ridge <- mean((te_pred - y_te)^2)
+tr_error_ridge
+te_error_ridge
+
+# without standardization
+cv_fit_ridge <- cv.glmnet(x_tr_std, y_tr, alpha = 0)
+tr_pred <- predict(cv_fit_ridge, newx = x_tr_std)
+te_pred <- predict(cv_fit_ridge, newx = x_te_std)
+tr_error_ridge <- mean((tr_pred - y_tr)^2)
+te_error_ridge <- mean((te_pred - y_te)^2)
+tr_error_ridge
+te_error_ridge
+
+```
+
+# lasso Solution Path 
+
+```{r}
+fit_lasso <- glmnet(x_tr_std, y_tr, alpha = 1)
+plot_glmnet(fit_lasso)
+```
+
+```{r}
+cv_fit_lasso <- cv.glmnet(x_tr, y_tr)
+tr_pred <- predict(cv_fit_lasso, newx = x_tr)
+te_pred <- predict(cv_fit_lasso, newx = x_te)
+tr_error_lasso <- mean((tr_pred - y_tr)^2)
+te_error_lasso <- mean((te_pred - y_te)^2)
+tr_error_lasso
+te_error_lasso
+```
+
+
+```{r}
+df <- data.frame(methods = c("Best Subset", "Forward", "Backward", "Ridge", "Lasso"),
+                 test_error = c(te_error_best, te_error_forward, te_error_backward, te_error_ridge, te_error_lasso))
+df
+
+```
+
+

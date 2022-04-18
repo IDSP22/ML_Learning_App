@@ -1,0 +1,194 @@
+---
+title: "Machine Learning in Public Health"
+author: "Dr. Yang Feng"
+subtitle: 'Lecture 4: KNN Classification and ROC (Lab)'
+output:
+  html_document: 
+    df_print: paged
+    number_sections: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE,
+                      warnings = FALSE, fig.align = 'center',  eval = TRUE)
+```
+
+# $K$-Nearest Neighbors Classification
+
+## Predict `default` using balance
+
+- Prepare the training and test data
+    ```{r}
+    library(tidyverse)
+    library(ISLR)
+    library(caret)
+    default_tr <- Default[1:3000, ]
+    default_te <- Default[-(1:3000), ]
+    ```
+- Run KNN on training data using $K=5$.
+```{r}
+fit_knn <- knn3(default ~ balance, data = default_tr, k = 5)
+ pred_knn <- predict(fit_knn, newdata = default_tr, type = "class")
+mean(pred_knn != default_tr$default)
+ pred_knn <- predict(fit_knn, newdata = default_te, type = "class")
+mean(pred_knn != default_te$default)
+```
+
+- Run KNN on training data with varying $K$ values
+```{r}
+k_seq <- seq(from = 1, to = 300, by = 10)
+train_error_seq <- test_error_seq <- NULL
+for(k_ind in seq_along(k_seq)){
+ k <- k_seq[k_ind]
+ fit_knn <- knn3(default ~ balance, data = default_tr, k = k)
+ pred_knn <- predict(fit_knn, newdata = default_tr, type = "class")
+ train_error_seq[k_ind] <- mean(pred_knn != default_tr$default)
+ pred_knn <- predict(fit_knn, newdata = default_te, type = "class")
+ test_error_seq[k_ind] <- mean(pred_knn != default_te$default)
+}
+knn_re <- rbind(data.frame(K = k_seq, error = train_error_seq, type = "train"),
+                data.frame(K = k_seq, error = test_error_seq, type = "test"))
+mytheme <- theme(axis.title = element_text(size = 30),
+        axis.text = element_text(size = 20),
+        legend.text = element_text(size = 20),
+        legend.title = element_text(size = 20))
+ggplot(knn_re, mapping = aes(x = K, y = error, color = type)) +
+  geom_point(size = 2) +
+  geom_line(size = 2) +
+  mytheme
+```
+
+## Importance of standardization before applying KNN
+
+```{r, echo=TRUE}
+library(MASS)
+n <- 100
+set.seed(0)
+mu1 <- c(0, 2)
+mu2 <- c(2, 2)
+Sigma <- matrix(c(1, 0.5, 0.5, 1), 2, 2)
+x1 <- mvrnorm(n, mu1, Sigma)
+x2 <- mvrnorm(n, mu2, Sigma)
+dat <- rbind(data.frame(v1 = x1[, 1], v2 = 100*x1[, 2], class = "red"),
+             data.frame(v1 = x2[, 1], v2 = 100*x2[, 2], class = "blue"))
+ggplot(dat) + geom_point(mapping = aes(x = v1, y = v2, color = class)) + mytheme
+fit <- knn3(class ~ ., data = dat, k = 5)
+ypred <- predict(fit, newdata = dat, type = "class")
+mean(ypred != dat$class)
+```
+
+## After standardization 
+
+```{r, echo=TRUE}
+dat_std <- dat
+dat_std[, 1:2] <- scale(dat[, 1:2], center = FALSE, scale = TRUE)
+ggplot(dat_std) + geom_point(mapping = aes(x = v1, y = v2, color = class)) + mytheme
+fit <- knn3(class ~ ., data = dat_std, k = 5)
+ypred <- predict(fit, newdata = dat_std, type = "class")
+mean(ypred != dat_std$class)
+```
+
+## Threshold for Binary Classification
+
+- Fit the logistic regression model on the training data.
+    ```{r, echo = TRUE, eval=TRUE,warning=FALSE}
+    fit_logi <- glm(default ~ balance + income, data = default_tr, family='binomial');
+    pred_train_prob <- predict(fit_logi, type = 'response')
+    pred_train_label <- ifelse(pred_train_prob > 0.5, 'Yes', 'No')
+    table(true = default_tr$default, predicted = pred_train_label) #Confusion Matrix/Table
+    ```
+
+
+- Let's compute FPR and TPR
+    ```{r, echo = TRUE}
+    FP <- sum(default_tr$default == "Yes" & pred_train_label == "No")
+    TP <- sum(default_tr$default == "Yes" & pred_train_label == "Yes")
+    N <- sum(pred_train_label == "No")
+    P <- sum(pred_train_label == "Yes")
+    FPR <- FP/N
+    TPR <- TP/P
+    FPR
+    TPR
+    ```
+
+
+## Adjusting the threshold
+
+
+- Decrease the threshold
+    ```{r,echo=TRUE,eval=TRUE,warning=FALSE,fig.asp=0.45}
+    pred_train_label_2 <- ifelse(pred_train_prob > 0.3, 'Yes', 'No')
+    table(true = default_tr$default, predicted = pred_train_label_2)
+    ```
+
+- Increase the threshold
+    ```{r,echo=TRUE,eval=TRUE,warning=FALSE,fig.asp=0.45}
+    pred_train_label_2 <- ifelse(pred_train_prob > 0.7, 'Yes', 'No')
+    table(true = default_tr$default, predicted = pred_train_label_2)
+    ```
+
+# Receiver Operating Characteristics (ROC) 
+
+
+## Using the **pROC** package
+```{r, echo = TRUE}
+    library(pROC)
+    #define object to plot
+    rocobj_logi <- roc(default_tr$default, pred_train_prob)
+    #create ROC plot
+    auc_logi <- auc(rocobj_logi)
+    ggroc(rocobj_logi, size = 2) + ggtitle(paste("ROC using   logistic regression with AUC value ", round(auc_logi, 3)))   + mytheme
+```
+
+## ROC curve by hand
+
+```{r, echo = TRUE}
+fit_logi <- glm(default ~ balance + income, data = default_tr, family='binomial');
+pred_train_prob <- predict(fit_logi, type = 'response')
+thre_seq <- sort(pred_train_prob)
+fpr_seq <- tpr_seq <- NULL
+for(thre_ind in seq_along(thre_seq)){
+  thre <- thre_seq[thre_ind]
+  pred_train_label <- ifelse(pred_train_prob > thre, "Yes", "No")
+  FP <- sum(default_tr$default == "No" & pred_train_label == "Yes")
+  TP <- sum(default_tr$default == "Yes" & pred_train_label == "Yes")
+  N <- sum(default_tr$default == "No")
+  P <- sum(default_tr$default == "Yes")
+  fpr_seq[thre_ind] <- FP/N
+  tpr_seq[thre_ind] <- TP/P
+}
+roc_dat <- data.frame(TPR = tpr_seq, FPR = fpr_seq)
+ggplot(roc_dat) + geom_point(mapping = aes(x = FPR, y = TPR))
+```
+
+## Comparing different methods via `ggroc()`
+
+```{r}
+library(MASS)
+lda.fit <- lda(default ~ balance + income, data = default_tr)
+lda.pred <- predict(lda.fit)$posterior[, 2]
+rocobj_lda <- roc(default_tr$default, lda.pred)
+auc_lda <- auc(rocobj_lda)
+qda.fit <- qda(default ~ balance + income, data = default_tr)
+qda.pred <- predict(qda.fit)$posterior[, 2]
+rocobj_qda <- roc(default_tr$default, qda.pred)
+auc_qda <- auc(rocobj_qda)
+knn.fit <- knn3(default ~ balance + income, data = default_tr, k = 5,
+                prob = TRUE)
+knn.pred <- predict(knn.fit, newdata = default_tr, type = "prob")
+rocobj_knn <- roc(default_tr$default, knn.pred[ ,2])
+
+auc_knn <- auc(rocobj_knn)
+rocobjs <- list(Logistic = rocobj_logi, LDA = rocobj_lda, QDA = rocobj_qda,
+                KNN = rocobj_knn)
+methods_auc <- paste(c("Logistic", "LDA", "QDA","KNN"),
+                     "AUC = ", 
+                     round(c(auc_logi, auc_lda, auc_qda, auc_knn),3))
+ggroc(rocobjs, size = 2, alpha = 0.5) + 
+  scale_color_discrete(labels = methods_auc) +
+  mytheme
+```
+
+
+
+

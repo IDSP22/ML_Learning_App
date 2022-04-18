@@ -1,0 +1,159 @@
+---
+title: "Machine Learning in Public Health"
+author: "Dr. Yang Feng"
+subtitle: 'Lecture 7: Regression and Classification Trees (Lab)'
+output:
+  html_document: 
+    df_print: paged
+    number_sections: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE,
+                      warnings = FALSE, fig.align = 'center',  eval = TRUE, out.width = "70%")
+```
+
+# Predicting a baseball player’s Salary
+
+Using the Hitters data set. Based on Years (the number of years that he has played in the major leagues) and Hits (the number of hits that he made in the previous year). 
+```{r}
+library(tidyverse)
+data(Hitters, package = 'ISLR')
+salary <- Hitters %>% 
+  select(Salary, Years, Hits) %>%
+  drop_na() %>%
+  mutate(logSalary = log(Salary))
+```
+
+The first few rows of the data
+```{r}
+head(salary)
+```
+
+
+## Fit a Decision Tree
+
+```{r}
+library(tree)
+sal.tree <- tree(logSalary ~ Years + Hits, data = salary)
+plot(sal.tree)
+text(sal.tree)
+```
+
+## Pruning the tree
+
+```{r}
+sal.tree.prune <- prune.tree(sal.tree, best = 2) #The subtree with two terminal nodes
+plot(sal.tree.prune)
+text(sal.tree.prune)
+```
+
+
+
+```{r}
+sal.tree.prune <- prune.tree(sal.tree, best = 3) #The subtree with three terminal nodes
+plot(sal.tree.prune)
+text(sal.tree.prune)
+```
+
+
+
+
+
+## Cross-validation to predict the log Salary
+
+```{r}
+sal.tree <- tree(logSalary ~ Years + Hits, data = salary)
+set.seed(0)
+cv.sal <- cv.tree(sal.tree)
+#names(cv.sal)
+cv.sal_df <- data.frame(size = cv.sal$size, deviance = cv.sal$dev)
+best_size <- cv.sal$size[which.min(cv.sal$dev)]
+ggplot(cv.sal_df, mapping = aes(x = size, y = deviance)) + 
+  geom_point(size = 3) + 
+  geom_line() +
+  geom_vline(xintercept = best_size, col = "red")
+#cat('CV leads to the optimal tree size as ', best_size,'\n')
+```
+
+## Visualizing the pruned regression tree
+
+```{r}
+sal.tree.final <- prune.tree(sal.tree, best = best_size) #The subtree with best_size terminal nodes
+plot(sal.tree.final)
+text(sal.tree.final)
+```
+
+## Computer the training error
+```{r}
+pred_salary <- predict(sal.tree.final, newdata = salary)
+mean((pred_salary - salary$logSalary)^2)
+```
+
+
+# Trees for classification 
+
+## Example for predicting high salary
+
+Create `salary <- salary %>% mutate(high_salary = logSalary > median(logSalary))`.
+```{r}
+salary <- salary %>% mutate(high_salary = logSalary > median(logSalary))
+salary$high_salary <- as.factor(salary$high_salary)
+sal.tree <- tree(high_salary ~ Years + Hits, data = salary)
+set.seed(0)
+cv.sal <- cv.tree(sal.tree)
+#names(cv.sal)
+cv.sal_df <- data.frame(size = cv.sal$size, deviance = cv.sal$dev)
+best_size <- cv.sal$size[which.min(cv.sal$dev)]
+ggplot(cv.sal_df, mapping = aes(x = size, y = deviance)) + 
+  geom_point(size = 3) + 
+  geom_line() +
+  geom_vline(xintercept = best_size, col = "red")
+```
+
+## Visualizing the pruned classification tree
+
+```{r}
+#cat('CV leads to the optimal tree size as ', best_size,'\n')
+sal.tree.final <- prune.tree(sal.tree, best = best_size) #The subtree with best_size terminal nodes
+plot(sal.tree.final)
+text(sal.tree.final)
+```
+
+
+## Using the Gini criterion to split
+
+```{r}
+salary <- salary %>% mutate(high_salary = logSalary > median(logSalary))
+salary$high_salary <- as.factor(salary$high_salary)
+sal.tree <- tree(high_salary ~ Years + Hits, data = salary, split = "gini")
+set.seed(0)
+cv.sal <- cv.tree(sal.tree)
+#names(cv.sal)
+cv.sal_df <- data.frame(size = cv.sal$size, deviance = cv.sal$dev)
+best_size <- cv.sal$size[which.min(cv.sal$dev)]
+ggplot(cv.sal_df, mapping = aes(x = size, y = deviance)) + 
+  geom_point(size = 3) + 
+  geom_line() +
+  geom_vline(xintercept = best_size, col = "red")
+```
+
+## Visualizing the pruned classification tree
+
+```{r}
+#cat('CV leads to the optimal tree size as ', best_size,'\n')
+sal.tree.final <- prune.tree(sal.tree, best = best_size) #The subtree with best_size terminal nodes
+plot(sal.tree.final)
+text(sal.tree.final)
+```
+
+
+
+## Computer the training classification error
+```{r}
+pred_high_salary <- predict(sal.tree.final, newdata = salary, type = "class")
+mean(pred_high_salary != salary$high_salary)
+```
+
+
+

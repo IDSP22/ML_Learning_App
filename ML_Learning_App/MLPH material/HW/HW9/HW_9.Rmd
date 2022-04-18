@@ -1,0 +1,37 @@
+---
+title: "HW 9"
+author: "Dr. Yang Feng"
+output:
+  html_document:
+    number_sections: true
+    df_print: paged
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE,
+                      warnings = FALSE, fig.align = 'center',  eval = TRUE)
+```
+
+
+You can run the following code to prepare the analysis.
+```{r}
+library(r02pro)     #INSTALL IF NECESSARY
+library(tidyverse)  #INSTALL IF NECESSARY
+library(MASS)
+my_ahp <- ahp %>% dplyr::select(gar_car, liv_area, lot_area, bsmt_area, gar_area, oa_qual, sale_price, bedroom, bathroom, yr_built) %>%
+  na.omit()
+my_ahp_x <- my_ahp %>% dplyr::select(-sale_price)
+my_ahp_y <- my_ahp %>% dplyr::select(sale_price)
+```
+
+1. Conduct PCA on `my_ahp_x` with `scale = TRUE`. 
+a. Create a biplot. 
+b. Plot the Proportion of Variance Explained and the Cumulative Proportion of Variance Explained. 
+c. Fit a linear regression of `sale_price` on the first two principle components. What's the $R^2$? 
+d. Fit a linear regression of `sale_price` on `gar_car` and `liv_area`. What's the $R^2$? 
+
+2. Conduct PCA on `my_ahp_x` with `scale = FALSE` and compare the results of a-c with those of Q1. 
+a. Create a biplot. 
+b. Plot the Proportion of Variance Explained and the Cumulative Proportion of Variance Explained. 
+c. Fit a linear regression of `sale_price` on the first two principle components. What's the $R^2$? 
+

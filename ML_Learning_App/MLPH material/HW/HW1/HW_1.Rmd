@@ -1,0 +1,68 @@
+---
+title: "HW 1"
+author: "Dr. Yang Feng"
+output:
+  html_document:
+    number_sections: true
+    df_print: paged
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE,
+                      warnings = FALSE, fig.align = 'center',  eval = TRUE)
+```
+
+We will be predicting the housing price using the `sahp` dataset in the **r02pro** package. Please answer the following questions.
+
+You can run the following code to prepare the analysis.
+```{r}
+library(r02pro)
+library(tidyverse)
+my_sahp <- sahp %>% 
+  na.omit() %>%
+  select(gar_car, liv_area, kit_qual, sale_price)
+View(my_sahp)
+my_sahp_train <- my_sahp[1:100, ]
+my_sahp_test <- my_sahp[-(1:100), ]
+```
+
+1. Using the training data `my_sahp_train` to fit a simple linear regression model of `sale_price` on each variable (`gar_car`, `liv_area`, `kit_qual`) separately. For each regression,
+
+    a. Interpret the coefficients and compute the $R^2$. Which variable is most useful in predicting the `sale_price`?
+    b. Comput the fitted value and the prediction on the test data, then compute the training and test error. Which variable gives the smallest test error? Does this agree with the variable with the highest $R^2$? Explain your findings.
+
+```{r}
+
+```
+
+2. Using the training data `my_sahp_train` to fit a linear regression model of `sale_price` on all variables, interpret the coefficients and compute the $R^2$. Then compute the training and test error. Compare the results to Q1 and explain your findings.
+
+```{r}
+
+```
+
+
+3. Now, use the KNN method for predicting the `sale_price` using all predictors. 
+    a. Vary the nearest number $K$ from 1 to 50 with increment 1. For each $K$, fit the KNN regression model on the training data, and predict on the test data. Visualize the training and test error trend as a function of $K$. Discuss your findings.
+    b. Compare the best KNN result with the linear regression result in Q2. Discuss your findings. 
+
+```{r}
+
+```
+
+4. ISLR book 2nd Edition Chapter 3.7 Question 6
+
+$$
+\hat \beta_1 = \frac{\sum^n_{i=1}(x_i - \bar x)(y_i - \bar y)}{\sum^n_{i=1}(x_i - \bar x)^2}
+$$
+$$
+\hat \beta_0 = \bar y - \hat \beta_1 \bar x
+$$
+where $\bar y = \frac{1}{n}\sum^n_{i=1}y_i$ and $\bar x = \frac{1}{n}\sum^n_{i=1}x_i$
+
+Using (3.4 least squares coeffcient estimates - see equations above), argue that in the case of simple linear regression, theleast squares line always passes through the point $(\bar x, \bar y$).
+
+$$
+
+
+$$

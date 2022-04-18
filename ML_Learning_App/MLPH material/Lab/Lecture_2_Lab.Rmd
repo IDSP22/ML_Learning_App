@@ -1,0 +1,292 @@
+---
+title: "Machine Learning in Public Health"
+author: "Dr. Yang Feng"
+subtitle: 'Lecture 2: Linear Regression (Lab)'
+output:
+  html_document:
+#    pandoc_args: --lua-filter=color-text.lua
+    number_sections: true
+    df_print: paged
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE,
+                      warnings = FALSE, fig.align = 'center',  eval = TRUE)
+```
+
+# Data Exploration
+
+Example: Boston housing data
+
+- Output (response, target, dependent) variable is [medv]{color="red"}, the median home price in neighborhoods of Suburbs of Boston
+- Input variables include (but not limited to)
+	* [crim]{color="blue"}: per capita crime rate by town
+	* [rm]{color="blue"}: average number of rooms per dwelling
+	* [zn]{color="blue"}: proportion of large lots (zoned for > $25,000$ feet)
+	* [chas]{color="blue"}: whether a home is near the Charles river ($x \in \{0, 1\}$)
+	* [ptratio]{color="blue"}: pupil-teacher ratio by town
+
+
+- Let's do a little data exploration
+
+```{r, eval=TRUE,warning=FALSE}
+library(MASS)   
+library(tidyverse)   #INSTALL IF NEEDED
+library(caret)       #INSTALL IF NEEDED
+data(Boston)
+boston <- Boston %>% dplyr::select(crim, rm, zn, chas, ptratio, medv)
+head(boston)
+summary(boston)
+```
+
+# Simple Linear Regression
+## Boston housing: Number of Bedrooms
+
+Idea: let us run a regression on each of these, and see which is best, first, the number of bedrooms `rm`.
+
+```{r,echo=TRUE,eval=TRUE,warning=FALSE}
+fit_rm <- lm(medv ~ rm, data = boston)
+fit_rm
+```
+
+
+
+
+## Measuring the fit
+
+Compute its fitted values $\hat y_i$ and residuals
+```{r, echo = TRUE}
+df_rm <- data.frame(true_response = boston$medv,
+           fitted_response = fit_rm$fitted.values,
+           residual = fit_rm$residuals)
+head(df_rm)
+summary(fit_rm)$r.squared    #compute R2
+```
+
+
+## Visualization
+
+
+```{r,fig.height = 8, fig.width = 14}
+# theme function: customize the non-data components of your plots: i.e. titles, labels, fonts, background, gridlines, and legends.
+mytheme <- theme(axis.title = element_text(size = 30),
+        axis.text = element_text(size = 20))
+
+ggplot(data = boston, mapping = aes(x = rm, y = medv)) + 
+  geom_point(size = 2) + 
+  geom_smooth(method = "lm", se = FALSE, size = 3) +
+  mytheme
+ggplot(data = df_rm) +
+  geom_point(mapping = aes(x = true_response,
+                           y = fitted_response)) +
+  mytheme
+```
+
+
+## Boston housing: Charles River
+
+ - categorical predictor 
+ 
+```{r, echo = TRUE, warning=FALSE}
+fit_chas <- lm(medv ~ chas, data = boston)
+fit_chas
+summary(fit_chas)$r.squared
+```
+
+```{r}
+ggplot(data = boston, mapping = aes(x = chas, y = medv)) + 
+  geom_point(size = 2) + 
+  geom_smooth(method = "lm", se = FALSE, size = 3) +
+  mytheme
+```
+
+Its $R^2=$ `r summary(fit_chas)$r.squared`
+
+
+## Boston housing: Student to teacher ratio
+
+
+```{r,echo=TRUE,warning=FALSE}
+fit_ptratio <- lm(medv ~ ptratio, data = boston)
+fit_ptratio
+summary(fit_ptratio)$r.squared
+```
+
+```{r}
+ggplot(data = boston, mapping = aes(x = ptratio, y = medv)) + 
+  geom_point(size = 2) + 
+  geom_smooth(method = "lm", se = FALSE, size = 3) +
+  mytheme
+```
+
+# Multiple Linear Regression
+## Boston housing: number of bedrooms and student to teacher ratio
+
+
+```{r,echo=TRUE,warning=FALSE}
+fit_rm_ptratio <- lm(medv ~ rm + ptratio, data = boston)
+fit_rm_ptratio
+summary(fit_rm_ptratio)$r.squared
+```
+
+
+
+## Housing data: regression on everything
+\footnotesize
+```{r,echo=TRUE,eval=TRUE,warning=FALSE}
+fit_all <- lm(formula = medv ~ ., data = boston)
+```
+
+```{r}
+df_all <- data.frame(true_response = boston$medv,
+           fitted_response = fit_all$fitted.values,
+           residual = fit_all$residuals)
+df_all <- rbind(cbind(df_rm, type = "rm"),
+                cbind(df_all, type = "all"))
+ggplot(df_all) + 
+  geom_point(mapping = aes(x = true_response,
+                           y = fitted_response,
+                           color = type),
+             size = 2) +
+  geom_abline(slope = 1, intercept = 0, size = 3) + 
+  mytheme
+```
+
+## Summary of `lm`
+
+
+```{r,echo=TRUE,eval=TRUE,warning=FALSE}
+summary(fit_rm_ptratio)
+```
+
+
+
+
+## `ANOVA`
+
+```{r,echo=TRUE,eval=TRUE,warning=FALSE}
+anova(fit_rm_ptratio)
+```
+
+- The **degrees of freedom** (df) for residuals is $n-p-1$
+- the total df = 1 + 1 + 503 = 505
+- What's the sample size of this dataset?  
+
+Ans: 506
+
+## ANOVA: reduce model vs. full model
+
+- Reduced model: `medv ~ 1` (no variable)
+- Full model: `medv ~ rm + ptratio`
+```{r}
+fit_null <- lm(medv ~ 1, data = boston)
+anova(fit_null, fit_rm_ptratio)
+```
+
+
+## CI and Predicting using the linear regression model  
+
+```{r,echo=TRUE,eval=TRUE,warning=FALSE}
+confint(fit_rm_ptratio, level = 0.95) # 95% CI for the coefficients 
+```
+```{r,echo=TRUE,eval=TRUE,warning=FALSE}
+df_test <- data.frame(rm=1, ptratio=2)
+predict(fit_rm_ptratio, newdata = df_test, 
+        level = 0.95, interval = "confidence")
+```
+
+```{r,echo=TRUE,eval=TRUE,warning=FALSE}
+predict(fit_rm_ptratio, newdata = df_test, 
+        level = 0.95, interval = "prediction")
+```
+
+```{r,echo=TRUE,eval=TRUE,warning=FALSE}
+df_test <- data.frame(rm = c(1:5), ptratio = c(2:6))
+predict(fit_rm_ptratio, newdata = df_test, 
+        level = 0.95, interval = "confidence")
+```
+
+# Qualitative Predictors
+
+- We usually code qualitative variables by **dummy variables** (variables taking values $0$ and $1$). 
+```{r}
+boston$rm_cate <- cut_number(boston$rm, 3)              #create a qualitative variable
+levels(boston$rm_cate) <- c("Small", "Medium", "Big")   #set the labels
+head(boston %>% dplyr::select(medv, rm, rm_cate))       #select the variables
+```
+
+
+
+- R will automatically do the conversion for us in `lm()`
+```{r}
+fit_rm_cate <- lm(medv ~ rm_cate, data = boston)
+summary(fit_rm_cate)
+```
+
+
+# $K$ Nearest Neighbors
+
+## KNN: Generate Data
+- Recall we assume $Y = f(X) + \epsilon$. 
+```{r}
+x <- seq(from = -6, to = 6, by = 0.1)
+n <- length(x)
+y_true <- sin(x)    #true function
+y <- y_true + rnorm(length(x))
+train_dat <- data.frame(x = x, y = y, y_true = y_true)
+ggplot(train_dat, mapping = aes(x = x, y = y)) +
+  geom_point() +
+  geom_smooth(method = "lm", color = "red", se = FALSE,
+              size = 2) +
+  geom_line(mapping = aes(x = x, y = y_true), 
+            color = "purple",
+            size = 2) + mytheme
+head(train_dat)
+```
+
+
+## KNN: Different choice of $K$
+
+
+```{r}
+x_test <- seq(from = -6, to = 6, by = 0.01)  #test data
+y_true_test <- sin(x_test)
+y_test <- y_true_test + rnorm(length(x_test))
+k_seq <- c(1, 10, n)
+pred_dat <- NULL
+test_error_seq <- train_error_seq <- rep(0, 3)
+for(k in seq_along(k_seq)){
+  # knnreg: $k$-nearest neighbour regression that can return the average value for the neighbours.
+  fit <- knnreg(data.frame(x), y, k = k_seq[k])
+  y_test_hat <- predict(fit, data.frame(x_test))
+  test_error_seq[k] <- sum((y_test - y_test_hat)^2)
+  y_train_hat <- predict(fit, data.frame(x))
+  train_error_seq[k] <- sum((y - y_train_hat)^2)
+  pred_dat <- rbind(pred_dat,
+                    data.frame(x = x_test,
+                               y = y_test_hat,
+                               y_true = y_test,
+                               k = k_seq[k]))
+}
+data.frame(k = k_seq, train_error = train_error_seq, test_error = test_error_seq)
+
+# note: multiple datasets in one plot
+ggplot(pred_dat) + 
+  geom_point(mapping = aes(x = x,
+                           y = y),
+             data = train_dat,
+             alpha = 0.5,
+             color = "black") + 
+  geom_point(mapping = aes(x = x, 
+                           y = y,
+                           color = factor(k)),
+             alpha = 0.5) +
+  geom_line(mapping = aes(x = x,
+                          y = y_true),
+            data = train_dat,
+            size = 2) 
+```
+
+- $K=1$: perfect fit on training data, too rough, bias low, [variance high]{color="red"}
+- $K=121$ (sample size): constant fit, just the sample average, too smooth, [bias high]{color="red"}, variance low (0)
+- $K=10$: a good balance

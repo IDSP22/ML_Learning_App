@@ -1,0 +1,80 @@
+---
+title: "Lecture 9: PCA (Lab)"
+output:
+  html_document:
+  df_print: paged
+---
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
+```
+
+
+
+## PCA
+
+We will use the `USArrests` dataset.
+```{r}
+library(ISLR)
+states <- row.names(USArrests)
+apply(USArrests, 2, mean)
+apply(USArrests, 2, var)
+```
+
+Compute the PCA
+```{r}
+pr.out <- prcomp(USArrests, scale = TRUE)
+names(pr.out)
+```
+
+The standard deviations of the principal components (i.e., the square roots of the eigenvalues of the covariance/correlation matrix).
+```{r}
+pr.out$sdev
+```
+
+The centering and scales used:
+```{r}
+pr.out$center
+pr.out$scale
+```
+
+
+The matrix of variable loadings (i.e., a matrix whose columns contain the eigenvectors).
+```{r}
+pr.out$rotation
+```
+
+
+Create a biplot:
+```{r}
+biplot(pr.out, scale = 0)
+```
+
+Compute the Percentage of Variance Explained (PVE):
+```{r}
+pr.var <- pr.out$sdev^2
+pve <- pr.var / sum(pr.var)
+pve
+```
+
+Visualization:
+```{r}
+par(mfrow = c(1, 2))
+plot(pve, xlab = "Principal Component",
+ylab = "Proportion of Variance Explained", ylim = c(0, 1),
+type = "b")
+plot(cumsum(pve), xlab = "Principal Component",
+ylab = "Cumulative Proportion of Variance Explained", ylim = c(0, 1), type = "b")
+```
+
+## Doing PCA without the function
+
+```{r}
+my_cor <- cor(USArrests)
+my_scale <- scale(USArrests)
+attr(my_scale, "scaled:center")
+attr(my_scale, "scaled:scale")
+my_cor_eigen <- eigen(my_cor)
+sqrt(my_cor_eigen$values)
+my_cor_eigen$vectors
+```
+

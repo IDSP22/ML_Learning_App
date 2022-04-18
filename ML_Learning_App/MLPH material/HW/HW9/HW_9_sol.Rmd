@@ -1,0 +1,105 @@
+---
+title: "HW 9"
+author: "Dr. Yang Feng"
+output:
+  html_document:
+    number_sections: true
+    df_print: paged
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE,
+                      warnings = FALSE, fig.align = 'center',  eval = TRUE)
+```
+
+
+You can run the following code to prepare the analysis.
+```{r}
+library(r02pro)     #INSTALL IF NECESSARY
+library(tidyverse)  #INSTALL IF NECESSARY
+library(MASS)
+my_ahp <- ahp %>% dplyr::select(gar_car, liv_area, lot_area, bsmt_area, gar_area, oa_qual, sale_price, bedroom, bathroom, yr_built) %>%
+  na.omit()
+my_ahp_x <- my_ahp %>% dplyr::select(-sale_price)
+my_ahp_y <- my_ahp %>% dplyr::select(sale_price)
+```
+
+1. Conduct PCA on `my_ahp_x` with `scale = TRUE`. 
+a. Create a biplot. 
+b. Plot the Proportion of Variance Explained and the Cumulative Proportion of Variance Explained. 
+c. Fit a linear regression of `sale_price` on the first two principle components. What's the $R^2$? 
+d. Fit a linear regression of `sale_price` on `gar_car` and `liv_area`. What's the $R^2$? 
+
+2. Conduct PCA on `my_ahp_x` with `scale = FALSE` and compare the results of a-c with those of Q1. 
+a. Create a biplot. 
+b. Plot the Proportion of Variance Explained and the Cumulative Proportion of Variance Explained. 
+c. Fit a linear regression of `sale_price` on the first two principle components. What's the $R^2$? 
+
+
+
+
+```{r}
+pr.out <- prcomp(my_ahp_x, scale = TRUE)
+```
+
+```{r}
+biplot(pr.out, scale = 0)
+```
+
+```{r}
+pr.var <- pr.out$sdev^2
+pve <- pr.var / sum(pr.var)
+pve
+```
+
+Visualization:
+```{r}
+par(mfrow = c(1, 2))
+plot(pve, xlab = "Principal Component",
+ylab = "Proportion of Variance Explained", ylim = c(0, 1),
+type = "b")
+plot(cumsum(pve), xlab = "Principal Component",
+ylab = "Cumulative Proportion of Variance Explained", ylim = c(0, 1), type = "b")
+```
+
+```{r}
+cor(pr.out$x[,1], my_ahp$sale_price)
+cor(my_ahp_x, my_ahp$sale_price)
+summary(lm(my_ahp$sale_price ~ pr.out$x[,1:2]))
+summary(lm(sale_price ~ gar_car + liv_area, 
+           data = my_ahp))
+```
+
+
+
+```{r}
+pr.out <- prcomp(my_ahp_x, scale = FALSE)
+```
+
+```{r}
+biplot(pr.out, scale = 0)
+```
+
+```{r}
+pr.var <- pr.out$sdev^2
+pve <- pr.var / sum(pr.var)
+pve
+```
+
+Visualization:
+```{r}
+par(mfrow = c(1, 2))
+plot(pve, xlab = "Principal Component",
+ylab = "Proportion of Variance Explained", ylim = c(0, 1),
+type = "b")
+plot(cumsum(pve), xlab = "Principal Component",
+ylab = "Cumulative Proportion of Variance Explained", ylim = c(0, 1), type = "b")
+```
+
+```{r}
+cor(pr.out$x[,1], my_ahp$sale_price)
+cor(my_ahp_x, my_ahp$sale_price)
+summary(lm(my_ahp$sale_price ~ pr.out$x[,1:2]))
+summary(lm(sale_price ~ gar_car + liv_area, 
+           data = my_ahp))
+```

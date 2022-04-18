@@ -1,0 +1,139 @@
+---
+title: "Lecture 8: Bagging, Random Forest, Boosting (Lab)"
+output:
+  html_document:
+    df_print: paged
+---
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
+```
+
+In this document, we present an example for regression tree, bagging, random forest, boosting.
+
+## Regression Tree
+
+```{r}
+library(MASS)
+library(tree)
+set.seed(2)
+train <- sample(1:nrow(Boston),nrow(Boston)/2) ##Divide the data into training and testing 
+tree.boston <- tree(medv ~ ., Boston, subset = train)
+cv.boston <- cv.tree(tree.boston)
+
+bestsize <- cv.boston$size[which.min(cv.boston$dev)] ##Get the best tree size (no. of leaf nodes)
+prune.boston <- prune.tree(tree.boston, best = bestsize) ##Prune the tree to this size
+plot(prune.boston)
+text(prune.boston, pretty=0)
+```
+
+Now, we evaluate its prediction performance.
+
+```{r}
+yhat <- predict(tree.boston, newdata = Boston[-train,])
+boston.test <- Boston[-train,"medv"]
+mean((yhat-boston.test)^2)
+```
+
+
+
+## Bagging
+
+We can use the randomForest function to implement Bagging, with `mtry = p`, the number of predictors. 
+```{r}
+library(randomForest)
+set.seed(1)
+p <- ncol(Boston)-1
+##Setting mtry = p for bagging
+bag.boston <- randomForest(medv ~ ., data = Boston, subset=train, mtry = p, importance=TRUE)
+bag.boston
+
+yhat.bag <- predict(bag.boston,newdata=Boston[-train,])
+mean((yhat.bag-boston.test)^2)
+importance(bag.boston)
+varImpPlot(bag.boston)
+```
+
+## Random Forest
+
+```{r}
+set.seed(1)
+rf.boston <- randomForest(medv ~ ., data = Boston, subset = train, importance = TRUE)
+yhat.rf <- predict(rf.boston, newdata = Boston[-train,])
+mean((yhat.rf-boston.test)^2)
+
+importance(rf.boston)
+varImpPlot(rf.boston)
+```
+
+## Boosting
+
+Here, we use the gradient boosting machine (gbm) function to implement boosting.
+```{r}
+library(gbm)
+set.seed(1)
+boost.boston <- gbm(medv ~ .,data = Boston[train,], distribution = "gaussian", n.trees = 5000, interaction.depth = 1, cv.folds = 5)
+best_n_tress <- which.min(boost.boston$cv.error)
+summary(boost.boston)
+yhat.boost <- predict(boost.boston, newdata = Boston[-train,], n.trees = best_n_tress)
+mean((yhat.boost - boston.test)^2)
+```
+
+# Classification for Iris Data
+
+```{r}
+tr_ind <- c(1:30, 51:80, 101:130)
+tree_fit <- tree(Species ~ ., data = iris, subset = tr_ind)
+cv_tree_fit <- cv.tree(tree_fit)
+best_size <- cv_tree_fit$size[which.min(cv_tree_fit$dev)]
+tree_prune <- prune.tree(tree_fit, best = best_size)
+plot(tree_prune)
+text(tree_prune)
+tree_pred <- predict(tree_prune, 
+                     newdata = iris[-tr_ind, ],
+                     type = "class")
+mean(tree_pred != iris$Species[-tr_ind])
+```
+
+
+```{r}
+set.seed(1)
+p <- ncol(iris)-1
+##Setting mtry = p for bagging
+bag.iris <- randomForest(Species ~ ., data = iris, subset=tr_ind, mtry = p, importance=TRUE)
+bag.iris
+
+yhat.bag <- predict(bag.iris,newdata=iris[-tr_ind,])
+
+mean(yhat.bag != iris$Species[-tr_ind])
+importance(bag.iris)
+varImpPlot(bag.iris)
+```
+
+
+
+```{r}
+set.seed(1)
+p <- ncol(iris)-1
+rf.iris <- randomForest(Species ~ ., data = iris, subset=tr_ind, importance=TRUE)
+rf.iris
+
+yhat.rf <- predict(rf.iris,newdata=iris[-tr_ind,])
+
+mean(yhat.rf != iris$Species[-tr_ind])
+importance(rf.iris)
+varImpPlot(rf.iris)
+```
+
+
+
+Here, we use the gradient boosting machine (gbm) function to implement boosting.
+```{r}
+set.seed(1)
+boost.iris <- gbm(Species ~ .,data = iris[tr_ind,], distribution = "multinomial", n.trees = 5000, interaction.depth = 1, cv.folds = 5, shrinkage = 0.2)
+best_n_tress <- which.min(boost.iris$cv.error)
+summary(boost.iris)
+
+yprob.boost <- predict(boost.iris, newdata = iris[-tr_ind,], n.trees = best_n_tress, type = "response")
+yhat.boost <- levels(iris$Species)[apply(yprob.boost, 1, which.max)]
+mean(yhat.boost != iris$Species[-tr_ind])
+```

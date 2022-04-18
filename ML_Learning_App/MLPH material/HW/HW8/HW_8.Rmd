@@ -1,0 +1,22 @@
+---
+title: "HW 8"
+author: "Dr. Yang Feng"
+output:
+  html_document:
+    number_sections: true
+    df_print: paged
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE,
+                      warnings = FALSE, fig.align = 'center',  eval = TRUE)
+```
+
+
+1. Question 10.10.1 on Page 458 in ISLRv2. 
+
+2. Question 10.10.2 on Page 458 in ISLRv2. 
+
+3. Question 10.10.3 on Page 459 in ISLRv2. 
+
+4. Question 10.10.5 on Page 459 in ISLRv2. 

@@ -1,0 +1,42 @@
+---
+title: "HW 5"
+author: "Dr. Yang Feng"
+output:
+  html_document:
+    number_sections: true
+    df_print: paged
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE,
+                      warnings = FALSE, fig.align = 'center',  eval = TRUE)
+```
+
+You can run the following code to prepare the analysis.
+```{r}
+library(tidyverse)  #INSTALL IF NECESSARY
+n <- 300
+p <- 20
+set.seed(111)
+x <- matrix(rnorm(n*p), n, p)
+beta <- rep(0, p)
+beta[seq(1, 19, 2)] = seq(from = 0.1, to = 1, by = 0.1)
+y <- x %*% beta + rnorm(n)
+dat <- data.frame(x = x, y = y)
+colnames(dat) <- c(paste0("x", 1:p), "y")
+tr_dat <- dat[1:(n/2), ]
+te_dat <- dat[-(1:(n/2)), ]
+```
+
+Suppose we want to build a linear regression model to predict `y`. Please answer the following questions.
+
+1. Use the training data `tr_dat` using the following methods. For each method, output its regression coefficients, and compute its test error on `te_dat`. Looking at the true regression coefficients `beta`, discuss your findings on the following methods. 
+  a. Best Subset Selection with BIC
+  b. Forward Stepwise Selection with Adjusted $R^2$
+  c. Backward Stepwise Selection with Cp
+  d. Ridge Regression with 10-fold CV
+  e. Lasso with 10-fold CV
+
+
+2. For the Simple Special Case for Ridge Regression and Lasso, prove (6.14) and (6.15) on Page 247 of ISLRv2.
+

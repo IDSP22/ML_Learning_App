@@ -1,0 +1,231 @@
+---
+title: "Lecture 9: Deep Learning (Lab)"
+output:
+  html_document:
+  df_print: paged
+---
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
+```
+
+
+In this document, we present a deep learning example for regression and classification. 
+
+## Installation of the packages
+```{r, eval=FALSE}
+install.packages("tensorflow")
+install.packages("keras")
+install.packages("tfdatasets")
+install.packages("mlbench")
+library(keras)
+install_keras()
+```
+
+## Deep Learning for Regression
+
+The Boston Housing Prices dataset is accessible directly from keras.
+```{r}
+library(mlbench)
+library(keras)
+library(tfdatasets)
+library(caret)
+library(dplyr)
+data(BostonHousing)
+BostonHousing$chas <- as.numeric(BostonHousing$chas)
+set.seed(0)
+tr_ind <- sample(nrow(BostonHousing), 404)
+train_df <- BostonHousing[tr_ind, ]
+test_df <- BostonHousing[-tr_ind, ]
+train_x <- train_df %>% dplyr::select(-medv)
+train_y <- train_df$medv
+test_x <- test_df %>% dplyr::select(-medv)
+test_y <- test_df$medv
+```
+
+
+Scale all features into the interval $[0, 1]$.
+```{r}
+std_fit <- preProcess(train_x, method = "scale")
+train_x_std <- predict(std_fit, newdata = train_x)
+test_x_std <- predict(std_fit, newdata = test_x)
+train_x_mat <- as.matrix(train_x_std)
+test_x_mat <- as.matrix(test_x_std)
+```
+
+
+
+1. Setup the layers
+```{r}
+ptrain <- ncol(train_x)
+model <- keras_model_sequential()
+model %>%
+  layer_dense(
+    units = 64,
+    activation = 'relu',
+    input_shape = c(ptrain)
+  )   %>%
+  layer_dense(units = 1, activation = 'linear')
+summary(model)
+```
+
+2. Compile the model
+```{r}
+model %>% compile(
+  loss = 'mean_squared_error',
+  optimizer = optimizer_rmsprop(),
+  metrics = c('mse')
+)
+```
+
+3. Train the model
+```{r}
+history <- model %>% fit(
+  train_x_mat,
+  train_y,
+  epochs = 10,
+  batch_size = 16,
+  validation_split = 0.1
+)
+```
+
+
+4. Evaluate the accuracy
+```{r}
+score <- model %>% evaluate(test_x_mat, test_y, verbose = 0)
+cat('Test loss:', score["loss"], "\n")
+```
+
+5. Make predictions
+```{r}
+y_hat <- model %>% predict(train_x_mat)
+y_pred <- model %>% predict(test_x_mat)
+mean((y_hat - train_y)^2)
+mean((y_pred - test_y)^2)
+```
+
+Linear Regression
+```{r}
+fit <- lm(medv ~ ., data = train_df)
+y_hat <- predict(fit, newdata = train_df)
+y_pred <- predict(fit, newdata = test_df)
+mean((y_hat - train_y)^2)
+mean((y_pred - test_y)^2)
+```
+
+## Deep Learning for Classification
+
+
+Download the data
+```{r}
+fashion_mnist <- dataset_fashion_mnist()
+c(train_images, train_labels) %<-% fashion_mnist$train
+c(test_images, test_labels) %<-% fashion_mnist$test
+class_names = c('T-shirt/top',
+                'Trouser',
+                'Pullover',
+                'Dress',
+                'Coat', 
+                'Sandal',
+                'Shirt',
+                'Sneaker',
+                'Bag',
+                'Ankle boot')
+train_images <- train_images / 255
+test_images <- test_images / 255
+```
+
+Visualize the first 25 images
+```{r}
+par(mfcol=c(5,5))
+par(mar=c(0, 0, 1.5, 0), xaxs='i', yaxs='i')
+for (i in 1:25) { 
+  img <- train_images[i, , ]
+  img <- t(apply(img, 2, rev)) 
+  image(1:28, 1:28, img, col = gray((0:255)/255), xaxt = 'n', yaxt = 'n',
+        main = paste(class_names[train_labels[i] + 1]))
+}
+```
+
+1. Setup the layers
+```{r}
+model <- keras_model_sequential()
+model %>%
+  layer_flatten(input_shape = c(28, 28)) %>%
+  layer_dense(units = 128, activation = 'relu') %>%
+  layer_dense(units = 10, activation = 'softmax')
+summary(model)
+```
+
+2. Compile the model
+```{r}
+model %>% compile(
+  optimizer = 'adam', 
+  loss = 'sparse_categorical_crossentropy',
+  metrics = c('accuracy')
+)
+```
+
+3. Train the model
+```{r}
+model %>% fit(train_images, train_labels, epochs = 5, verbose = 2)
+```
+
+4. Evaluate the accuracy
+```{r}
+score <- model %>% evaluate(test_images, test_labels, verbose = 0)
+cat('Test loss:', score["loss"], "\n")
+cat('Test accuracy:', score["accuracy"], "\n")
+```
+5. Make predictions
+
+```{r}
+pred_prob <- model %>% predict(test_images)
+pred_prob[1:5, ]
+pred_label <- class_names[apply(pred_prob, 1, which.max)]
+pred_label[1:5]
+```
+
+
+Now, let's add a dense layer.
+
+1. Setup the layers
+```{r}
+model <- keras_model_sequential()
+model %>%
+  layer_flatten(input_shape = c(28, 28)) %>%
+  layer_dense(units = 128, activation = 'relu') %>%
+  layer_dense(units = 64, activation = 'relu') %>%
+  layer_dense(units = 10, activation = 'softmax')
+summary(model)
+```
+
+2. Compile the model
+```{r}
+model %>% compile(
+  optimizer = 'adam', 
+  loss = 'sparse_categorical_crossentropy',
+  metrics = c('accuracy')
+)
+```
+
+3. Train the model
+```{r}
+model %>% fit(train_images, train_labels, epochs = 20, verbose = 2)
+```
+
+4. Evaluate the accuracy
+```{r}
+score <- model %>% evaluate(test_images, test_labels, verbose = 0)
+cat('Test loss:', score["loss"], "\n")
+cat('Test accuracy:', score["accuracy"], "\n")
+```
+5. Make predictions
+
+```{r}
+pred_prob <- model %>% predict(test_images)
+pred_prob[1:5, ]
+pred_label <- class_names[apply(pred_prob, 1, which.max)]
+pred_label[1:5]
+```
+
+
