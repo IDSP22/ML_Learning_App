@@ -26,6 +26,8 @@ my_sahp_train <- my_sahp[1:100, ]
 my_sahp_test <- my_sahp[-(1:100), ]
 ```
 
+# Question 1
+
 1. Using the training data `my_sahp_train` to fit a simple linear regression model of `sale_price` on each variable (`gar_car`, `liv_area`, `kit_qual`) separately. For each regression,
 
     a. Interpret the coefficients and compute the $R^2$. Which variable is most useful in predicting the `sale_price`?
@@ -56,6 +58,8 @@ for(var_ind in seq_along(vars)){
  lm_re
 ```
 
+# Question 2
+
 2. Using the training data `my_sahp_train` to fit a linear regression model of `sale_price` on all variables, interpret the coefficients and compute the $R^2$. Then compute the training and test error. Compare the results to Q1 and explain your findings.
 
 ```{r}
@@ -74,6 +78,7 @@ summary(fit_all)
  lm_re
 ```
 
+# Question 3
 
 3. Now, use the KNN method for predicting the `sale_price` using all predictors. 
     a. Vary the nearest number $K$ from 1 to 50 with increment 1. For each $K$, fit the KNN regression model on the training data, and predict on the test data. Visualize the training and test error trend as a function of $K$. Discuss your findings.

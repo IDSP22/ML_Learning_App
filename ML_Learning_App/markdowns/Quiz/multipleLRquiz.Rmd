@@ -1,0 +1,48 @@
+---
+title: "Multiple Linear Regression"
+output: 
+  learnr::tutorial
+runtime: shiny_prerendered
+---
+
+```{r setup, include=FALSE}
+library(learnr)
+library(r02pro)
+library(tidyverse)
+```
+
+We will be predicting the housing price using the `sahp` dataset in the **r02pro** package. Please answer the following questions.
+
+You can run the following code to prepare the analysis.
+```{r}
+my_sahp <- sahp %>% 
+  na.omit() %>%
+  select(gar_car, liv_area, kit_qual, sale_price)
+my_sahp_train <- my_sahp[1:100, ]
+my_sahp_test <- my_sahp[-(1:100), ]
+
+head(my_sahp)
+```
+
+
+Using the training data `my_sahp_train` to fit a linear regression model of `sale_price` on all variables, interpret the coefficients and compute the $R^2$. Then compute the training and test error. Compare the results to Q1 and explain your findings.
+
+```{r simpleLRQ2, exercise = TRUE}
+
+```
+
+```{r simpleLRQ2-solution}
+fit_all <- lm(sale_price ~., data = my_sahp_train)
+summary(fit_all)
+ sale_price_pred <- predict(fit_all, newdata = my_sahp_train)
+  train_error_seq <- c(train_error_seq, sum((my_sahp_train$sale_price - sale_price_pred)^2))
+  sale_price_pred <- predict(fit_all, newdata = my_sahp_test)
+  test_error_seq <- c(test_error_seq, sum((my_sahp_test$sale_price - sale_price_pred)^2))
+  R2_seq <- c(R2_seq, summary(fit_all)$r.squared)
+  vars <- c(vars, "All")
+  lm_re <- data.frame(var = vars,
+                         R2 = R2_seq,
+                        train_error = train_error_seq,
+                        test_error = test_error_seq)
+ lm_re
+```

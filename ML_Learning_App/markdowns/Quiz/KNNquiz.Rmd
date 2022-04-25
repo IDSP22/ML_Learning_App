@@ -1,0 +1,58 @@
+---
+title: "KNN Regression"
+output: 
+  learnr::tutorial
+runtime: shiny_prerendered
+---
+
+```{r setup, include=FALSE}
+library(learnr)
+library(r02pro)
+library(tidyverse)
+```
+
+We will be predicting the housing price using the `sahp` dataset in the **r02pro** package. Please answer the following questions.
+
+You can run the following code to prepare the analysis.
+```{r}
+my_sahp <- sahp %>% 
+  na.omit() %>%
+  select(gar_car, liv_area, kit_qual, sale_price)
+my_sahp_train <- my_sahp[1:100, ]
+my_sahp_test <- my_sahp[-(1:100), ]
+
+head(my_sahp)
+```
+
+Now, use the KNN method for predicting the `sale_price` using all predictors. 
+    Vary the nearest number $K$ from 1 to 50 with increment 1. For each $K$, fit the KNN regression model on the training data, and predict on the test data. Visualize the training and test error trend as a function of $K$. Discuss your findings.
+
+```{r simpleLRQ3, exercise = TRUE}
+
+```
+
+```{r simpleLRQ3-solution}
+library(caret)
+k_seq <- seq(from = 1, to = 50, by = 1)
+train_error_seq <- test_error_seq <- NULL
+for(k_ind in seq_along(k_seq)){
+  k <- k_seq[k_ind]
+knn_fit <- knnreg(sale_price ~ ., 
+                  data = my_sahp_train,
+                  k = k)
+sale_price_pred <- predict(knn_fit, newdata = my_sahp_train)
+  train_error_seq[k_ind] <- sum((my_sahp_train$sale_price - sale_price_pred)^2)
+  sale_price_pred <- predict(knn_fit, newdata = my_sahp_test)
+  test_error_seq[k_ind] <- sum((my_sahp_test$sale_price - sale_price_pred)^2)
+  
+}
+re <- rbind(data.frame(k = k_seq, error = train_error_seq, type = "train"),
+            data.frame(k = k_seq, error = test_error_seq, type = "test"))
+                      
+ggplot(re, mapping = aes(x = k, y = error, color = type)) +
+  geom_line() +
+  geom_point()
+k_best <- k_seq[which.min(test_error_seq)]
+test_error_seq[k_best]
+
+```
