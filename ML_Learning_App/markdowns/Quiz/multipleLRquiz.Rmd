@@ -27,11 +27,11 @@ head(my_sahp)
 
 Using the training data `my_sahp_train` to fit a linear regression model of `sale_price` on all variables, interpret the coefficients and compute the $R^2$. Then compute the training and test error. Compare the results to Q1 and explain your findings.
 
-```{r simpleLRQ2, exercise = TRUE}
+```{r multipleLRQ1, exercise = TRUE}
 
 ```
 
-```{r simpleLRQ2-solution}
+```{r multipleLRQ1-solution}
 fit_all <- lm(sale_price ~., data = my_sahp_train)
 summary(fit_all)
  sale_price_pred <- predict(fit_all, newdata = my_sahp_train)

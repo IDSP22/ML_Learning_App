@@ -27,11 +27,11 @@ head(my_sahp)
 Now, use the KNN method for predicting the `sale_price` using all predictors. 
     Vary the nearest number $K$ from 1 to 50 with increment 1. For each $K$, fit the KNN regression model on the training data, and predict on the test data. Visualize the training and test error trend as a function of $K$. Discuss your findings.
 
-```{r simpleLRQ3, exercise = TRUE}
+```{r knnQ1, exercise = TRUE}
 
 ```
 
-```{r simpleLRQ3-solution}
+```{r knnQ1-solution}
 library(caret)
 k_seq <- seq(from = 1, to = 50, by = 1)
 train_error_seq <- test_error_seq <- NULL

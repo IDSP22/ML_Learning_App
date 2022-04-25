@@ -1,0 +1,53 @@
+---
+title: "LDA & QDA"
+output: 
+  learnr::tutorial
+runtime: shiny_prerendered
+---
+
+```{r setup, include=FALSE}
+library(learnr)
+library(r02pro)
+library(tidyverse)
+library(MASS)
+```
+
+We will be predicting whether the housing price is expensive or not using the `sahp` dataset in the **r02pro** package. 
+
+You can run the following code to prepare the analysis.
+```{r}
+my_sahp <- sahp %>% 
+  na.omit() %>%
+  mutate(expensive = sale_price > median(sale_price)) %>%
+  dplyr::select(gar_car, liv_area, oa_qual, expensive) 
+my_sahp_train <- my_sahp[1:100, ]
+my_sahp_test <- my_sahp[-(1:100), ]
+
+head(my_sahp)
+```
+
+Please answer the following questions.
+
+Using the training data `my_sahp_train` to fit LDA and QDA models of `expensive` on all three variables (`gar_car`, `liv_area`, `oa_qual`). Compute the training and test error.
+
+```{r ldaqdaQ1, exercise = TRUE}
+
+```
+
+```{r ldaqdaQ1-solution}
+lda.fit <- lda(expensive ~ ., data = my_sahp_train)
+train_error_lda <- mean(predict(lda.fit, newdata = my_sahp_train)$class != my_sahp_train$expensive)
+test_erroe_lda <- mean(predict(lda.fit, newdata = my_sahp_test)$class != my_sahp_test$expensive)
+
+qda.fit <- qda(expensive ~ ., data = my_sahp_train)
+train_error_qda <- mean(predict(qda.fit, newdata = my_sahp_train)$class != my_sahp_train$expensive)
+test_erroe_qda <- mean(predict(qda.fit, newdata = my_sahp_test)$class != my_sahp_test$expensive)
+
+df_error <- data.frame(rbind(cbind(glm_re,type = "glm"),
+                             cbind(var = "all", 
+                                   train_error = c(train_error_lda,train_error_qda),
+                                   test_error = c(test_erroe_lda, test_erroe_qda),
+                                   type = c("lda", "qda"))))
+df_error
+```
+
