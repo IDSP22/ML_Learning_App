@@ -121,9 +121,15 @@ $(document).ready(function () {
 <pre class="r"><code>my_sahp &lt;- sahp %&gt;% 
   na.omit() %&gt;%
   select(gar_car, liv_area, kit_qual, sale_price)
-View(my_sahp)
 my_sahp_train &lt;- my_sahp[1:100, ]
-my_sahp_test &lt;- my_sahp[-(1:100), ]</code></pre>
+my_sahp_test &lt;- my_sahp[-(1:100), ]
+
+head(my_sahp)</code></pre>
+<div data-pagedtable="false">
+<script data-pagedtable-source type="application/json">
+{"columns":[{"label":["gar_car"],"name":[1],"type":["dbl"],"align":["right"]},{"label":["liv_area"],"name":[2],"type":["dbl"],"align":["right"]},{"label":["kit_qual"],"name":[3],"type":["chr"],"align":["left"]},{"label":["sale_price"],"name":[4],"type":["dbl"],"align":["right"]}],"data":[{"1":"2","2":"1479","3":"Good","4":"130.5"},{"1":"1","2":"1057","3":"Good","4":"109.0"},{"1":"2","2":"1444","3":"Average","4":"174.0"},{"1":"2","2":"1445","3":"Average","4":"138.5"},{"1":"2","2":"1888","3":"Good","4":"190.0"},{"1":"2","2":"1072","3":"Average","4":"140.0"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
+  </script>
+</div>
 <ol style="list-style-type: decimal">
 <li><p>Using the training data <code>my_sahp_train</code> to fit a simple linear regression model of <code>sale_price</code> on each variable (<code>gar_car</code>, <code>liv_area</code>, <code>kit_qual</code>) separately. For each regression,</p>
 <ol style="list-style-type: lower-alpha">
@@ -134,11 +140,50 @@ my_sahp_test &lt;- my_sahp[-(1:100), ]</code></pre>
 <div class="tutorial-exercise" data-label="simpleLRQ1" data-caption="Code" data-completion="1" data-diagnostics="1" data-startover="1" data-lines="0">
 <script type="application/json" data-opts-chunk="1">{"fig.width":6.5,"fig.height":4,"fig.retina":2,"fig.align":"default","fig.keep":"high","fig.show":"asis","out.width":624,"warning":true,"error":false,"message":true,"exercise.df_print":"paged","exercise.checker":"NULL"}</script>
 </div>
+<div class="tutorial-exercise-support" data-label="simpleLRQ1-solution" data-caption="Code" data-completion="1" data-diagnostics="1" data-startover="1" data-lines="0">
+<pre class="text"><code>vars &lt;- c(&quot;gar_car&quot;, &quot;liv_area&quot;, &quot;kit_qual&quot;)
+R2_seq &lt;- NULL
+train_error_seq &lt;- NULL
+test_error_seq &lt;- NULL
+re &lt;- NULL
+beta_coef_seq &lt;- NULL
+for(var_ind in seq_along(vars)){
+  var &lt;- vars[var_ind]
+  fit &lt;- lm(sale_price ~., data = my_sahp_train %&gt;% select(sale_price, all_of(var)))
+  print(coef(fit))
+  sale_price_pred &lt;- predict(fit, newdata = my_sahp_train)
+  train_error_seq[var_ind] &lt;- sum((my_sahp_train$sale_price - sale_price_pred)^2)
+  sale_price_pred &lt;- predict(fit, newdata = my_sahp_test)
+  test_error_seq[var_ind] &lt;- sum((my_sahp_test$sale_price - sale_price_pred)^2)
+  R2_seq[var_ind] &lt;- summary(fit)$r.squared
+ 
+}
+ lm_re &lt;- data.frame(var = vars,
+                  R2 = R2_seq,
+                  train_error = train_error_seq,
+                  test_error = test_error_seq)
+ lm_re</code></pre>
+</div>
 <ol start="2" style="list-style-type: decimal">
 <li>Using the training data <code>my_sahp_train</code> to fit a linear regression model of <code>sale_price</code> on all variables, interpret the coefficients and compute the <span class="math inline">\(R^2\)</span>. Then compute the training and test error. Compare the results to Q1 and explain your findings.</li>
 </ol>
 <div class="tutorial-exercise" data-label="simpleLRQ2" data-caption="Code" data-completion="1" data-diagnostics="1" data-startover="1" data-lines="0">
 <script type="application/json" data-opts-chunk="1">{"fig.width":6.5,"fig.height":4,"fig.retina":2,"fig.align":"default","fig.keep":"high","fig.show":"asis","out.width":624,"warning":true,"error":false,"message":true,"exercise.df_print":"paged","exercise.checker":"NULL"}</script>
+</div>
+<div class="tutorial-exercise-support" data-label="simpleLRQ2-solution" data-caption="Code" data-completion="1" data-diagnostics="1" data-startover="1" data-lines="0">
+<pre class="text"><code>fit_all &lt;- lm(sale_price ~., data = my_sahp_train)
+summary(fit_all)
+ sale_price_pred &lt;- predict(fit_all, newdata = my_sahp_train)
+  train_error_seq &lt;- c(train_error_seq, sum((my_sahp_train$sale_price - sale_price_pred)^2))
+  sale_price_pred &lt;- predict(fit_all, newdata = my_sahp_test)
+  test_error_seq &lt;- c(test_error_seq, sum((my_sahp_test$sale_price - sale_price_pred)^2))
+  R2_seq &lt;- c(R2_seq, summary(fit_all)$r.squared)
+  vars &lt;- c(vars, &quot;All&quot;)
+  lm_re &lt;- data.frame(var = vars,
+                         R2 = R2_seq,
+                        train_error = train_error_seq,
+                        test_error = test_error_seq)
+ lm_re</code></pre>
 </div>
 <ol start="3" style="list-style-type: decimal">
 <li>Now, use the KNN method for predicting the <code>sale_price</code> using all predictors.
@@ -150,12 +195,30 @@ my_sahp_test &lt;- my_sahp[-(1:100), ]</code></pre>
 <div class="tutorial-exercise" data-label="simpleLRQ3" data-caption="Code" data-completion="1" data-diagnostics="1" data-startover="1" data-lines="0">
 <script type="application/json" data-opts-chunk="1">{"fig.width":6.5,"fig.height":4,"fig.retina":2,"fig.align":"default","fig.keep":"high","fig.show":"asis","out.width":624,"warning":true,"error":false,"message":true,"exercise.df_print":"paged","exercise.checker":"NULL"}</script>
 </div>
-<ol start="4" style="list-style-type: decimal">
-<li>ISLR book 2nd Edition Chapter 3.7 Question 6</li>
-</ol>
-<p><span class="math display">\[
-\hat \beta_1 = \frac{\sum^n_{i=1}(x_i - \bar x)(y_i - \bar y)}{\sum^n_{i=1}(x_i - \bar x)^2}
-\]</span></p>
+<div class="tutorial-exercise-support" data-label="simpleLRQ3-solution" data-caption="Code" data-completion="1" data-diagnostics="1" data-startover="1" data-lines="0">
+<pre class="text"><code>library(caret)
+k_seq &lt;- seq(from = 1, to = 50, by = 1)
+train_error_seq &lt;- test_error_seq &lt;- NULL
+for(k_ind in seq_along(k_seq)){
+  k &lt;- k_seq[k_ind]
+knn_fit &lt;- knnreg(sale_price ~ ., 
+                  data = my_sahp_train,
+                  k = k)
+sale_price_pred &lt;- predict(knn_fit, newdata = my_sahp_train)
+  train_error_seq[k_ind] &lt;- sum((my_sahp_train$sale_price - sale_price_pred)^2)
+  sale_price_pred &lt;- predict(knn_fit, newdata = my_sahp_test)
+  test_error_seq[k_ind] &lt;- sum((my_sahp_test$sale_price - sale_price_pred)^2)
+  
+}
+re &lt;- rbind(data.frame(k = k_seq, error = train_error_seq, type = &quot;train&quot;),
+            data.frame(k = k_seq, error = test_error_seq, type = &quot;test&quot;))
+                      
+ggplot(re, mapping = aes(x = k, y = error, color = type)) +
+  geom_line() +
+  geom_point()
+k_best &lt;- k_seq[which.min(test_error_seq)]
+test_error_seq[k_best]</code></pre>
+</div>
 
 <script type="application/shiny-prerendered" data-context="server-start">
 library(learnr)
