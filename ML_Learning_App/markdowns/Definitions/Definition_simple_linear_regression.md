@@ -1,11 +1,9 @@
 ---
-title: "Definition of Simple Linear Regression"
-output: html_document
+output: 
+  html_document:
+    keep_md: TRUE
 ---
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-```
 ### Definition of Simple Linear Regression
 
 > All models are wrong; some models are useful... (George Box)

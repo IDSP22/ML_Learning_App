@@ -1,13 +1,8 @@
 ---
-title: "Simple Linear Regression"
-author: "Yuyu(Ruby) Chen"
-date: "4/25/2022"
-output: html_document
+output: 
+  html_document:
+    keep_md: TRUE
 ---
-
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-```
 
 ### Definition of Simple Linear Regression
 
