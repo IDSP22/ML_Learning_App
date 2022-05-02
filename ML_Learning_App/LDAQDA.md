@@ -6,7 +6,7 @@ Here are two websites that students can play with LDA in interactive ways:
 
 -- A visualization of LDA 
 https://analyticmodels.shinyapps.io/DiscriminantAnalysisModelling/
-This shinyApp 
+This shinyApp allow for customized dataset, uploading and analyzing self-provided dataset.
 
 -- A shiny app to check the assumptions of linear and quadratic discriminant analysis 
 https://thatdatatho.com/r-shiny-app-discriminant-analysis/
