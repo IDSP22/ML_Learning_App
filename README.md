@@ -22,6 +22,8 @@ Then we will distribute our survey through University email to students who are 
 5. Do you prefer reading notes/formula or visualizing graphs?
 6. Rate the difficulty level of the lecture/lab/quiz
 …
+
+
 These questionnaires will give us a first idea of our end users’ programming and experience background, the difficulty level of current materials, suggestions for how to optimize teaching experience through our application, and problems they encountered that have not been addressed by the current lab format. 
 
 ## User Testing 
