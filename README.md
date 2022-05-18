@@ -15,12 +15,12 @@ We will deploy a combination of online surveys and questionnaires, and focus gro
 
 Then we will distribute our survey through University email to students who are or have previously enrolled in the GPHGU 2338 - Machine Learning in Public Health. These questionnaires will contain ratings, multiple-choice, and open-ended questions, such as: 
 
-How much prior knowledge in machine learning/ R programming do you have?
-How many hours do you spent on the course materials/homework/quiz?
-Rate your confidence level in the following areas: (Linear Regression, Logistic Regression, LDA, QDA, Qualitative Variables, Anova etc.)
-What are some suggestions for the current lab/lecture/Quiz format?
-Do you prefer reading notes/formula or visualizing graphs?
-Rate the difficulty level of the lecture/lab/quiz
+1. How much prior knowledge in machine learning/ R programming do you have?
+2. How many hours do you spent on the course materials/homework/quiz?
+3. Rate your confidence level in the following areas: (Linear Regression, Logistic Regression, LDA, QDA, Qualitative Variables, Anova etc.)
+4. What are some suggestions for the current lab/lecture/Quiz format?
+5. Do you prefer reading notes/formula or visualizing graphs?
+6. Rate the difficulty level of the lecture/lab/quiz
 …
 These questionnaires will give us a first idea of our end users’ programming and experience background, the difficulty level of current materials, suggestions for how to optimize teaching experience through our application, and problems they encountered that have not been addressed by the current lab format. 
 
@@ -29,19 +29,19 @@ These questionnaires will give us a first idea of our end users’ programming a
 * Our Research Questions 
 
 For our student users: 
-How easily and successfully do users get started with launching the app on the site? 
-Does the starting point of clicking on the sub-topic make any difference in whether users will continue to explore the whole app or not? Do the background color, text style, font, text layout make any difference in whether users are successful in completing all the tasks on the website? Do these factors, as mentioned earlier, affect the time users spend on each sub-topic of the lecture content? 
-What paths do users take to complete the learning?
-How well does the site support the paths and goals of the users? That is, how closely does the organization and flow of the site match users’ expectations? 
-What obstacles do users encounter on the way to completing the learning? Are the definitions and instructions helpful? 
-What questions do users ask as they play with the datasets and simulations? 
-How do users feel about how long it takes them to complete the learning process, both the perceived time and the number of steps? 
+1. How easily and successfully do users get started with launching the app on the site? 
+2. Does the starting point of clicking on the sub-topic make any difference in whether users will continue to explore the whole app or not? Do the background color, text style, font, text layout make any difference in whether users are successful in completing all the tasks on the website? Do these factors, as mentioned earlier, affect the time users spend on each sub-topic of the lecture content? 
+3. What paths do users take to complete the learning?
+4. How well does the site support the paths and goals of the users? That is, how closely does the organization and flow of the site match users’ expectations? 
+5. What obstacles do users encounter on the way to completing the learning? Are the definitions and instructions helpful? 
+6. What questions do users ask as they play with the datasets and simulations? 
+7. How do users feel about how long it takes them to complete the learning process, both the perceived time and the number of steps? 
 
 
 For professors, teaching assistants and graders:
-How do TAs and professors think of the application in general for teaching and learning? Is it accessible and straightforward? Or does it even make their pedagogy more complicated and confusing? 
-How will TAs and professors collect the quiz results, and evaluate students’ performance? 
-Are TAs and professors confidently/comfortably using this app as a supplementary tool for teaching?
+1. How do TAs and professors think of the application in general for teaching and learning? Is it accessible and straightforward? Or does it even make their pedagogy more complicated and confusing? 
+2. How will TAs and professors collect the quiz results, and evaluate students’ performance? 
+3. Are TAs and professors confidently/comfortably using this app as a supplementary tool for teaching?
 
 * User Profile (characteristics of target participants for the test):
 
@@ -84,5 +84,12 @@ As for my question, “How do you use the drag-and-drop feature?” they said th
 The drag-and-drop part of this inserted mini-program is used the most while the flowchart is used the least. Users easily get attracted by some interactive features. However, my test participants reflected that the three scenarios we provided were not inclusive as they only covered nominal variables. Users might hope to see some cases and scenarios that contain ordinal variables.
 
 As for the interface in general, my test participants said they liked it very much. It’s fluid, concise, and easy to use. They had a good experience navigating the website. Some users suggested that the drop-and-drop exercise part was a bit small. The texts could be more prominent. But the overall layout of information and features was okay. 
+
+## Further Development
+
+Our potential next steps include incorporate the rest of class materials into the application, and potentially develop it as a open-source application for students across the world. We will conduct another round of prototype usability testing after implementing this educational application at NYU graduate program. We will gather feedback, suggestions, and opinions from the instructors as well as the students to further improve its functionality. 
+
+Further development may include allowing multiple users simultaneously control the R shiny(beneficial for demonstration and collaboration between students), and embedding pre-recorded videos and tutorials.
+
 
 
